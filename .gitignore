@@ -1,0 +1,21 @@
+build/
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+# HTML reports are large and regenerable from the JSON next to them.
+results/**/report.html
+results/**/mock-recordings/
+# claude plugin eval writes the same JSON twice; result.json is the copy skillbench reads.
+results/**/aggregate-result.json
+# Stray downloads and the regenerable dashboard (`skillbench dashboard`) stay out of history.
+*.part
+results/dashboard.html
+
+# Personal to each checkout: your config, your issue tracker, and the results store
+# (transcripts of your skills' runs). The store is still append-only data; keep it in a
+# private repo or a backup of your own.
+skillbench.toml
+.tix/
+results/

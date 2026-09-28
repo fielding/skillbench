@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.281",
+  "startedAt": "2026-09-23T21:24:50.285Z",
+  "durationSeconds": 0,
+  "costUsd": 0,
+  "partial": false,
+  "suite": {
+    "root": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-wrap",
+    "ablation": "with-without",
+    "modelOverride": "haiku",
+    "judgeModel": "haiku",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "probe-wrap",
+        "version": "0.0.1",
+        "path": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-wrap"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "greet",
+      "dir": "evals/greet",
+      "source": "prose",
+      "promptMarkdown": "Please greet me.",
+      "runsPerCase": 1,
+      "timeoutSeconds": 300,
+      "maxTurns": 4,
+      "graders": [
+        {
+          "name": "criteria",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "The final response contains the exact token PROBE_OK.",
+          "config": {
+            "criteria": "The final response contains the exact token PROBE_OK.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "fired",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Skill",
+            "input_match": "\"skill\"\\s*:\\s*\"(?:[\\w-]+:)?probe-bare\""
+          }
+        },
+        {
+          "name": "token",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "PROBE_OK",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 0,
+            "costUsd": 0,
+            "judgeCostUsd": 0,
+            "durationSeconds": 0,
+            "startedAt": "2026-09-23T21:24:50.298Z",
+            "error": "case \"\"greet\"\": \"evals\" is an eval-directory link that points outside the plugin — remove it",
+            "tracePath": "",
+            "skippedPaidGraders": false,
+            "graders": []
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 0,
+            "costUsd": 0,
+            "judgeCostUsd": 0,
+            "durationSeconds": 0,
+            "startedAt": "2026-09-23T21:24:50.323Z",
+            "error": "case \"\"greet\"\": \"evals\" is an eval-directory link that points outside the plugin — remove it",
+            "tracePath": "",
+            "skippedPaidGraders": false,
+            "graders": []
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0,
+        "passRate": 0,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 0
+      }
+    },
+    {
+      "name": "greet",
+      "dir": "skills/probe-bare/evals/greet",
+      "source": "prose",
+      "promptMarkdown": "Please greet me.",
+      "runsPerCase": 1,
+      "timeoutSeconds": 300,
+      "maxTurns": 4,
+      "graders": [
+        {
+          "name": "criteria",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "The final response contains the exact token PROBE_OK.",
+          "config": {
+            "criteria": "The final response contains the exact token PROBE_OK.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "token",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "PROBE_OK",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 0,
+            "costUsd": 0,
+            "judgeCostUsd": 0,
+            "durationSeconds": 0,
+            "startedAt": "2026-09-23T21:24:50.345Z",
+            "error": "case \"\"greet\"\": \"evals\" is an eval-directory link that points outside the plugin — remove it",
+            "tracePath": "",
+            "skippedPaidGraders": false,
+            "graders": []
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 0,
+            "costUsd": 0,
+            "judgeCostUsd": 0,
+            "durationSeconds": 0,
+            "startedAt": "2026-09-23T21:24:50.369Z",
+            "error": "case \"\"greet\"\": \"evals\" is an eval-directory link that points outside the plugin — remove it",
+            "tracePath": "",
+            "skippedPaidGraders": false,
+            "graders": []
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0,
+        "passRate": 0,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 0
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 2,
+    "casesPassed": 0,
+    "overallScore": 0,
+    "overallPassRate": 0,
+    "meanDelta": 0
+  }
+}

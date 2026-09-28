@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.281",
+  "startedAt": "2026-09-23T21:24:41.724Z",
+  "durationSeconds": 4,
+  "costUsd": 0.0181598,
+  "partial": false,
+  "suite": {
+    "root": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-fix",
+    "ablation": "none",
+    "modelOverride": "haiku",
+    "judgeModel": "haiku",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "probe-fix",
+        "path": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-fix"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "fixt",
+      "dir": "evals/fixt",
+      "source": "case_yaml",
+      "promptMarkdown": "Do exactly this, then stop: (1) Use Glob with pattern \"**/*\" to list every file in your working directory. (2) Read cache.py. (3) Reply with the paths you found and the first line of cache.py, verbatim.\n",
+      "runsPerCase": 1,
+      "timeoutSeconds": 300,
+      "maxTurns": 8,
+      "graders": [
+        {
+          "name": "sees-cache",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "cache\\.py",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "marker",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "MARKER_CACHE_LINE",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 3,
+            "costUsd": 0.0181598,
+            "judgeCostUsd": 0,
+            "durationSeconds": 4,
+            "startedAt": "2026-09-23T21:24:41.736Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-rWJwsS/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "sees-cache",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched cache\\.py",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "marker",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched MARKER_CACHE_LINE",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 1,
+    "overallScore": 1,
+    "overallPassRate": 1
+  }
+}

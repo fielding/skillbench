@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.281",
+  "startedAt": "2026-09-23T21:21:10.522Z",
+  "durationSeconds": 9,
+  "costUsd": 0.0329985,
+  "partial": false,
+  "suite": {
+    "root": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-bare",
+    "ablation": "with-without",
+    "modelOverride": "haiku",
+    "judgeModel": "haiku",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "probe-bare",
+        "path": "/private/tmp/claude-501/-Users-fielding-etc/9c5708f9-e577-4a6f-b564-f9b1a19d7f27/scratchpad/probe-bare"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "greet",
+      "dir": "evals/greet",
+      "source": "prose",
+      "promptMarkdown": "Please greet me.",
+      "runsPerCase": 1,
+      "timeoutSeconds": 300,
+      "maxTurns": 4,
+      "graders": [
+        {
+          "name": "criteria",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "The final response contains the exact token PROBE_OK.",
+          "config": {
+            "criteria": "The final response contains the exact token PROBE_OK.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "token",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "PROBE_OK",
+            "flags": "",
+            "match": "contains"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 3,
+            "costUsd": 0.0175823,
+            "judgeCostUsd": 0.000363,
+            "durationSeconds": 5,
+            "startedAt": "2026-09-23T21:21:10.527Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-VpiUgy/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "PROBE_OK"
+              },
+              {
+                "name": "token",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched PROBE_OK",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 1,
+            "costUsd": 0.015416200000000001,
+            "judgeCostUsd": 0.0004470000000000001,
+            "durationSeconds": 4,
+            "startedAt": "2026-09-23T21:21:15.861Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-CzXrpx/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": false,
+                "weight": 1,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "Hey there! 👋 I'm Claude, and I'm here to help you with your software engineering work. What can I do for you today?"
+              },
+              {
+                "name": "token",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 0,
+        "passRateWithout": 0,
+        "delta": 1
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 1,
+    "overallScore": 1,
+    "overallPassRate": 1,
+    "meanDelta": 1
+  }
+}

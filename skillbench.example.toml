@@ -1,0 +1,61 @@
+# skillbench: which skills get evaluated, against which models, and with what grants.
+# Paths may use ~; relative paths resolve against this file's directory.
+
+# Skill roots: a root is a skill (has SKILL.md) or a directory of skills. To track a third-party skill as well, add its directory (e.g. "~/.agents/skills/atomic-changes")
+# rather than the whole ~/.agents store, and put its cases under suites/<skill>/evals/.
+roots = ["~/src/skills"]                # a skill dir, a dir of skills, or the ~/.agents/skills store
+
+# The default model set for `skillbench run` when no --model is given.
+# Add a new id here the day a model ships, then run and `report --against` an old one.
+# `<provider>/<model>` ids run through the localhost proxy described under [providers].
+models = [
+  # Claude, direct (no proxy).
+  "claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5", "claude-sonnet-5", "claude-fable-5-1",
+  "claude-haiku-4-5",
+  # OpenAI-compatible providers, through the proxy described below (`skillbench models venice`
+  # lists the catalog). A few examples:
+  "venice/kimi-k3",
+  "venice/deepseek-v4-pro-0813",
+  "venice/openai-gpt-6-astra",
+  "venice/llama-3.3-70b",          # small open model: a floor, not a contender
+]
+
+# Non-Claude providers. `claude -p` only speaks the Anthropic API, so skillbench starts a
+# private CLIProxyAPI on localhost per run that translates to these OpenAI-compatible APIs.
+# `skillbench models venice` lists what the provider serves with tool calling.
+[providers.venice]
+base_url = "https://api.venice.ai/api/v1"
+api_key = "op://<vault>/<item>/credential"          # or keychain:<service> (macOS) or env:<VAR>; never a literal key
+# Venice serves Claude too, so the judge can stay a Claude model without a second key. It is not
+# the pinned native judge (claude-haiku-4-5), so proxied scores compare with each other, not
+# one-to-one with native runs. To share the judge, set [proxy] judge_api_key and drop this line.
+judge_model = "venice/claude-sonnet-4-5"
+
+[proxy]
+binary = "cliproxyapi"
+op_account = "<account>.1password.com"
+# Anthropic API key (secret reference) so proxied runs can use the pinned claude-haiku-4-5 judge.
+# judge_api_key = "op://<vault>/<anthropic-item>/credential"
+
+[defaults]
+# Pin the judge so scores stay comparable run to run; only the model under test moves.
+# Sonnet: a Haiku judge failed correct long reviews from Opus (verified 2026-09-28).
+judge_model = "claude-sonnet-5"
+runs = 3
+ablation = "with-without"   # also run every case with no skill loaded and report the delta
+max_cost_usd = 10.0         # hard ceiling per (skill, model) invocation
+concurrency = 2
+# The claude alias in ~/.shell_aliases unsets this so Claude Code uses the claude.ai login.
+unset_env = ["ANTHROPIC_API_KEY"]
+
+# Per-skill grants. `claude plugin eval` strips Write/Edit/Bash/WebFetch from the session
+# unless granted here, and only runs a case's scaffold script when scaffold = true.
+# Per-skill grants. The sandbox strips Write/Edit/Bash/WebFetch/WebSearch unless a skill is
+# granted them here, and fixture scaffold scripts only run with `scaffold = true` (they run
+# unsandboxed, as you). `skillbench doctor` flags cases that ask for more than they are granted.
+[skills.tutor]
+allow_tools = ["Write", "Edit"]
+scaffold = true
+
+[skills.rust-conventions]
+scaffold = true
