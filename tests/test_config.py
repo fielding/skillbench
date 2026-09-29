@@ -79,3 +79,9 @@ def test_provider_block_overrides_builtin_fields(tmp_path: Path):
     assert venice.base_url == "https://api.venice.ai/api/v1"  # untouched field keeps the default
     with pytest.raises(ConfigError, match="needs base_url and api_key"):
         config_from_dict({"providers": {"other": {"api_key": "env:X"}}}, root=tmp_path)
+
+
+def test_invalid_toml_is_a_config_error(tmp_path: Path):
+    (tmp_path / "skillbench.toml").write_text("[proxy] this is not toml\n")
+    with pytest.raises(ConfigError, match="skillbench.toml"):
+        load_config(start=tmp_path)

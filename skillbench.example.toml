@@ -35,9 +35,6 @@ models = [
 # api_key = "env:OTHER_API_KEY"
 # judge_model = "other/<strong-model>"
 
-[proxy] judge_api_key and drop this line.
-judge_model = "venice/claude-sonnet-4-5"
-
 [proxy]
 binary = "cliproxyapi"
 op_account = "<account>.1password.com"

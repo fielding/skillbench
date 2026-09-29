@@ -186,5 +186,8 @@ def load_config(path: Path | None = None, *, start: Path | None = None) -> Confi
         return config_from_dict({}, root=start)
     path = path.resolve()
     with path.open("rb") as handle:
-        data = tomllib.load(handle)
+        try:
+            data = tomllib.load(handle)
+        except tomllib.TOMLDecodeError as exc:
+            raise ConfigError(f"{path}: {exc}") from exc
     return config_from_dict(data, root=path.parent)
