@@ -18,9 +18,7 @@ class FakeRunner:
 def test_op_reference_uses_op_read_with_account():
     runner = FakeRunner(stdout="sk-venice-123\n")
     assert (
-        resolve(
-            "op://Vault/Provider/credential", op_account="example.1password.com", runner=runner
-        )
+        resolve("op://Vault/Provider/credential", op_account="example.1password.com", runner=runner)
         == "sk-venice-123"
     )
     assert runner.calls == [
