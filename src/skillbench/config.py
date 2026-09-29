@@ -33,6 +33,22 @@ class Provider:
     base_url: str
     api_key: str  # secret reference, see secrets.py
     judge_model: str | None = None
+    builtin: bool = (
+        False  # known without configuration; a [providers.<name>] block overrides fields
+    )
+
+
+# Providers skillbench knows without any configuration. A `[providers.<name>]` block with the
+# same name overrides any field. An `env:` key means a colleague only has to export the
+# variable to run `<name>/<model>` ids.
+BUILTIN_PROVIDERS: dict[str, dict[str, str]] = {
+    "venice": {
+        "base_url": "https://api.venice.ai/api/v1",
+        "api_key": "env:VENICE_API_KEY",
+        # Venice serves Claude, so the judge can stay on the provider with no second key.
+        "judge_model": "venice/claude-sonnet-4-5",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -116,20 +132,26 @@ def config_from_dict(data: dict[str, Any], root: Path) -> Config:
             skip=bool(raw.get("skip", False)),
         )
 
-    providers: dict[str, Provider] = {}
+    specs = {name: dict(spec) for name, spec in BUILTIN_PROVIDERS.items()}
     for name, raw in data.get("providers", {}).items():
         if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
             raise ConfigError(
                 f"provider name {name!r} must be alphanumeric (it prefixes model ids)"
             )
-        if not raw.get("base_url") or not raw.get("api_key"):
+        merged = {**specs.get(name, {}), **raw}
+        if not merged.get("base_url") or not merged.get("api_key"):
             raise ConfigError(f"providers.{name} needs base_url and api_key")
-        providers[name] = Provider(
+        specs[name] = merged
+    providers = {
+        name: Provider(
             name=name,
-            base_url=str(raw["base_url"]).rstrip("/"),
-            api_key=str(raw["api_key"]),
-            judge_model=raw.get("judge_model"),
+            base_url=str(spec["base_url"]).rstrip("/"),
+            api_key=str(spec["api_key"]),
+            judge_model=spec.get("judge_model"),
+            builtin=name in BUILTIN_PROVIDERS and name not in data.get("providers", {}),
         )
+        for name, spec in specs.items()
+    }
     raw_proxy = data.get("proxy", {})
     proxy = ProxySettings(
         binary=raw_proxy.get("binary", "cliproxyapi"),
@@ -161,7 +183,7 @@ def load_config(path: Path | None = None, *, start: Path | None = None) -> Confi
     if path is None:
         path = find_config(start)
     if path is None:
-        return Config(root=start)
+        return config_from_dict({}, root=start)
     path = path.resolve()
     with path.open("rb") as handle:
         data = tomllib.load(handle)

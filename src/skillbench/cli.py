@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shlex
 import shutil
@@ -298,16 +299,24 @@ def cmd_doctor(config: Config, args: argparse.Namespace) -> int:
     if not config.models:
         warn("no `models` in config; `run` needs --model")
 
-    if config.providers:
+    used = sorted({p for p in (split_model(m, config)[0] for m in config.models) if p})
+    if used:
         if shutil.which(config.proxy.binary) is None:
-            fail(f"[proxy] binary {config.proxy.binary!r} not on PATH; provider models cannot run")
+            fail(
+                f"[proxy] binary {config.proxy.binary!r} not on PATH; `{'/'.join(used)}/…` "
+                "models cannot run (brew install cliproxyapi)"
+            )
         else:
             ok(f"proxy binary {config.proxy.binary}")
-        refs = [p.api_key for p in config.providers.values()]
+        refs = [config.providers[name].api_key for name in used]
         if config.proxy.judge_api_key:
             refs.append(config.proxy.judge_api_key)
-        else:
-            warn("no [proxy] judge_api_key: provider runs cannot use the pinned Claude judge")
+        judgeless = [name for name in used if not config.providers[name].judge_model]
+        if judgeless and not config.proxy.judge_api_key:
+            warn(
+                f"provider {', '.join(judgeless)} has no judge_model and there is no "
+                "[proxy] judge_api_key, so llm graders cannot run on its models"
+            )
         if any(r.startswith("op://") for r in refs) and shutil.which("op"):
             who = ["op", "whoami"] + (
                 ["--account", config.proxy.op_account] if config.proxy.op_account else []
@@ -320,15 +329,24 @@ def cmd_doctor(config: Config, args: argparse.Namespace) -> int:
             else:
                 warn("1Password CLI not signed in: run `op signin` before a provider run")
         for ref in refs:
-            if ref.startswith("op://") and shutil.which("op") is None:
+            if ref.startswith("env:"):
+                var = ref.split(":", 1)[1]
+                if os.environ.get(var):
+                    ok(f"{var} is set")
+                else:
+                    warn(
+                        f"{var} is not set: export it, or point api_key at an op:// or "
+                        "keychain: reference in skillbench.toml"
+                    )
+            elif ref.startswith("op://") and shutil.which("op") is None:
                 fail(f"{ref} needs the 1Password CLI (op), which is not on PATH")
             elif ref.startswith("keychain:") and shutil.which("security") is None:
                 fail(f"{ref} needs macOS `security`")
             elif not ref.startswith(("op://", "keychain:", "env:")):
                 warn("literal api_key in skillbench.toml; prefer op://, keychain: or env:")
-        for name in config.providers:
-            if not any(m.startswith(name + "/") for m in config.models):
-                warn(f"provider {name} is configured but no `{name}/…` model is in `models`")
+    for name, provider in config.providers.items():
+        if not provider.builtin and name not in used:
+            warn(f"provider {name} is configured but no `{name}/…` model is in `models`")
 
     for root in config.roots:
         root = root.expanduser()

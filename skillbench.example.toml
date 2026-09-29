@@ -23,12 +23,19 @@ models = [
 # Non-Claude providers. `claude -p` only speaks the Anthropic API, so skillbench starts a
 # private CLIProxyAPI on localhost per run that translates to these OpenAI-compatible APIs.
 # `skillbench models venice` lists what the provider serves with tool calling.
-[providers.venice]
-base_url = "https://api.venice.ai/api/v1"
-api_key = "op://<vault>/<item>/credential"          # or keychain:<service> (macOS) or env:<VAR>; never a literal key
-# Venice serves Claude too, so the judge can stay a Claude model without a second key. It is not
-# the pinned native judge (claude-haiku-4-5), so proxied scores compare with each other, not
-# one-to-one with native runs. To share the judge, set [proxy] judge_api_key and drop this line.
+# Venice is built in: `export VENICE_API_KEY=…` is all a `venice/<model>` id needs. Uncomment
+# to override a field (for example to read the key from 1Password or the macOS Keychain).
+# [providers.venice]
+# api_key = "op://<vault>/<item>/credential"   # or keychain:<service>, env:<VAR>
+# judge_model = "venice/claude-sonnet-4-5"     # Venice serves Claude, so the judge needs no second key
+
+# Any other OpenAI-compatible provider works the same way, under its own prefix:
+# [providers.other]
+# base_url = "https://api.example.com/v1"
+# api_key = "env:OTHER_API_KEY"
+# judge_model = "other/<strong-model>"
+
+[proxy] judge_api_key and drop this line.
 judge_model = "venice/claude-sonnet-4-5"
 
 [proxy]

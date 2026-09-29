@@ -40,7 +40,11 @@ def test_provider_config_validation(tmp_path: Path):
     with pytest.raises(ConfigError):
         config_from_dict({"providers": {"bad/name": {"base_url": "x", "api_key": "y"}}}, tmp_path)
     with pytest.raises(ConfigError):
-        config_from_dict({"providers": {"venice": {"base_url": "x"}}}, tmp_path)
+        config_from_dict({"providers": {"other": {"base_url": "x"}}}, tmp_path)
+    # A built-in provider only needs the fields you want to change.
+    partial = config_from_dict({"providers": {"venice": {"api_key": "env:MY_KEY"}}}, tmp_path)
+    assert partial.providers["venice"].api_key == "env:MY_KEY"
+    assert partial.providers["venice"].base_url == "https://api.venice.ai/api/v1"
 
 
 def test_split_and_group(tmp_path: Path):

@@ -96,28 +96,41 @@ the theme. `#skill@model` in the URL deep-links a cell.
 ## Models other than Claude
 
 `claude -p` only speaks the Anthropic Messages API, so other providers run through a private
-[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) instance (`brew install
-cliproxyapi`). Model ids take a provider prefix:
+[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) instance that skillbench starts
+and stops per run. Venice is known out of the box: install the proxy, export your key, run.
 
-```toml
-models = ["claude-opus-5", "venice/kimi-k3", "venice/qwen-3-8-max"]
-
-[providers.venice]
-base_url = "https://api.venice.ai/api/v1"
-api_key = "op://<vault>/<item>/credential"   # or keychain:<service>, env:<VAR>
-judge_model = "venice/claude-sonnet-4-5"     # a judge the provider itself serves
-
-[proxy]
-op_account = "<account>.1password.com"
-# judge_api_key = "op://…"   # route the configured Claude judge to Anthropic instead
+```sh
+brew install cliproxyapi
+export VENICE_API_KEY=…                       # from your Venice account's API keys page
+uv run skillbench doctor                       # confirms the proxy binary and the key
+uv run skillbench models venice                # the catalog, with tool-calling support per model
+uv run skillbench run -m venice/kimi-k3 -s <skill>
 ```
 
-Per run, skillbench resolves the key (1Password CLI, macOS Keychain or an env var), writes
-a 0600 proxy config under `build/proxy/`, starts the proxy on a free localhost port with a
+Model ids take the provider prefix. Venice serves Claude as well, so the judge for `venice/…`
+runs stays on Venice (`venice/claude-sonnet-4-5`) and no Anthropic key is needed. Any of the
+defaults can be overridden per field, and other OpenAI-compatible providers are added the same
+way:
+
+```toml
+[providers.venice]
+api_key = "op://<vault>/<item>/credential"   # instead of env:VENICE_API_KEY; keychain:<service> also works
+
+[providers.other]
+base_url = "https://api.example.com/v1"
+api_key = "env:OTHER_API_KEY"
+judge_model = "other/some-strong-model"       # or set [proxy] judge_api_key to route a Claude judge
+
+[proxy]
+op_account = "<account>.1password.com"        # only for op:// references
+# judge_api_key = "op://…"                     # route the configured Claude judge to Anthropic instead
+```
+
+Per run, skillbench resolves the key (env var, 1Password CLI or macOS Keychain), writes a
+0600 proxy config under `build/proxy/`, starts the proxy on a free localhost port with a
 random per-run token and the management API off, points the eval's `claude` children at it,
-and deletes the config when the run ends. `skillbench models <provider>` lists what the
-provider serves and whether each model supports tool calls. Two caveats, both recorded in
-`meta.json` and shown in the dashboard: the judge differs unless you route it, and Claude
+and deletes the config when the run ends. Two caveats, both recorded in `meta.json` and shown
+in the dashboard: the judge differs from your Claude runs unless you route it, and Claude
 Code's cost estimate assumes Claude pricing, so proxied runs are shown as unpriced.
 
 ## Where cases live

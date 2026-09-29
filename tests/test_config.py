@@ -58,3 +58,24 @@ def test_invalid_ablation(tmp_path: Path):
 def test_concurrency_bounds(tmp_path: Path):
     with pytest.raises(ConfigError):
         config_from_dict({"defaults": {"concurrency": 9}}, tmp_path)
+
+
+def test_venice_is_known_without_config(tmp_path: Path):
+    cfg = load_config(start=tmp_path)
+    venice = cfg.providers["venice"]
+    assert venice.builtin
+    assert venice.base_url == "https://api.venice.ai/api/v1"
+    assert venice.api_key == "env:VENICE_API_KEY"
+    assert venice.judge_model == "venice/claude-sonnet-4-5"
+
+
+def test_provider_block_overrides_builtin_fields(tmp_path: Path):
+    cfg = config_from_dict(
+        {"providers": {"venice": {"api_key": "op://Vault/Venice/credential"}}}, root=tmp_path
+    )
+    venice = cfg.providers["venice"]
+    assert not venice.builtin
+    assert venice.api_key == "op://Vault/Venice/credential"
+    assert venice.base_url == "https://api.venice.ai/api/v1"  # untouched field keeps the default
+    with pytest.raises(ConfigError, match="needs base_url and api_key"):
+        config_from_dict({"providers": {"other": {"api_key": "env:X"}}}, root=tmp_path)
