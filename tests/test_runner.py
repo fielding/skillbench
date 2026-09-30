@@ -54,3 +54,15 @@ def test_child_env_unsets(monkeypatch):
     env = child_env(["ANTHROPIC_API_KEY", "NOT_SET"])
     assert "ANTHROPIC_API_KEY" not in env
     assert env["KEEP_ME"] == "1"
+
+
+def test_cost_ceiling_precedence_and_proxied_runs():
+    from skillbench.cli import _max_cost
+
+    assert _max_cost(None, None, 10.0) == 10.0
+    assert _max_cost(None, 4.0, 10.0) == 4.0
+    assert _max_cost(2.5, 4.0, 10.0) == 2.5
+    assert _max_cost(0, 4.0, 10.0) is None  # zero on the CLI disables it
+    # Proxied runs are unpriced, so no ceiling unless the CLI asks for one.
+    assert _max_cost(None, 4.0, 10.0, proxied=True) is None
+    assert _max_cost(3.0, 4.0, 10.0, proxied=True) == 3.0

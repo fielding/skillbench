@@ -409,10 +409,20 @@ def cmd_doctor(config: Config, args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------- run
 
 
-def _max_cost(cli: float | None, skill: float | None, default: float | None) -> float | None:
-    """CLI wins; zero or negative on the CLI removes the ceiling entirely."""
+def _max_cost(
+    cli: float | None, skill: float | None, default: float | None, *, proxied: bool = False
+) -> float | None:
+    """CLI wins; zero or negative on the CLI removes the ceiling entirely.
+
+    A proxied run is unpriced: Claude Code estimates cost at Claude prices whatever the
+    upstream model, so the ceiling would cut it off at an arbitrary point (a qwen run was
+    marked partial at a fictional $10). Proxied runs get no ceiling unless one is asked
+    for explicitly on the command line.
+    """
     if cli is not None:
         return None if cli <= 0 else cli
+    if proxied:
+        return None
     return skill if skill is not None else default
 
 
@@ -509,7 +519,12 @@ def _run_one(
         runs=args.runs or o.runs or config.runs,
         ablation=args.ablation or o.ablation or config.ablation,
         concurrency=args.concurrency or config.concurrency,
-        max_cost_usd=_max_cost(args.max_cost_usd, o.max_cost_usd, config.max_cost_usd),
+        max_cost_usd=_max_cost(
+            args.max_cost_usd,
+            o.max_cost_usd,
+            config.max_cost_usd,
+            proxied=provider_name is not None,
+        ),
         allow_tools=o.allow_tools,
         scaffold=o.scaffold,
         case_glob=args.case,

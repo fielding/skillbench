@@ -131,7 +131,8 @@ Per run, skillbench resolves the key (env var, 1Password CLI or macOS Keychain),
 random per-run token and the management API off, points the eval's `claude` children at it,
 and deletes the config when the run ends. Two caveats, both recorded in `meta.json` and shown
 in the dashboard: the judge differs from your Claude runs unless you route it, and Claude
-Code's cost estimate assumes Claude pricing, so proxied runs are shown as unpriced.
+Code's cost estimate assumes Claude pricing, so proxied runs are shown as unpriced and the
+`max_cost_usd` ceiling does not apply to them unless you pass `--max-cost-usd` explicitly.
 
 ## Where cases live
 
