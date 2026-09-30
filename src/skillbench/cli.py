@@ -317,17 +317,27 @@ def cmd_doctor(config: Config, args: argparse.Namespace) -> int:
                 f"provider {', '.join(judgeless)} has no judge_model and there is no "
                 "[proxy] judge_api_key, so llm graders cannot run on its models"
             )
-        if any(r.startswith("op://") for r in refs) and shutil.which("op"):
-            who = ["op", "whoami"] + (
+        # `op whoami` only reflects the current shell's session token; with the desktop-app
+        # integration `op read` works without one. Probe the real thing: resolve each reference
+        # and throw the value away.
+        for ref in [r for r in refs if r.startswith("op://")]:
+            if shutil.which("op") is None:
+                continue
+            argv = ["op", "read", "--no-newline", ref] + (
                 ["--account", config.proxy.op_account] if config.proxy.op_account else []
             )
-            signed_in = (
-                subprocess.run(who, capture_output=True, text=True, check=False).returncode == 0
-            )
-            if signed_in:
-                ok("1Password CLI signed in")
+            try:
+                probe = subprocess.run(
+                    argv, capture_output=True, text=True, timeout=30, check=False
+                )
+            except subprocess.TimeoutExpired:
+                warn(f"{ref}: `op read` timed out (approve the 1Password prompt, or `op signin`)")
+                continue
+            if probe.returncode == 0 and probe.stdout:
+                ok(f"{ref} resolves")
             else:
-                warn("1Password CLI not signed in: run `op signin` before a provider run")
+                why = (probe.stderr.strip().splitlines() or ["no output"])[-1]
+                warn(f"{ref}: {why} (unlock the 1Password app, or run `op signin`)")
         for ref in refs:
             if ref.startswith("env:"):
                 var = ref.split(":", 1)[1]
