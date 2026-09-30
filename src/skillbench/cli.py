@@ -128,7 +128,7 @@ def _list_stale(config: Config, args: argparse.Namespace) -> int:
     current = {
         s.name: fingerprints(s) for s in discover(config, include_empty=True) if s.name in with_runs
     }
-    cells = staleness(records, current, judge=config.judge_model)
+    cells = staleness(records, current, judge=config.judge_for)
     stale = [c for c in cells if c.stale]
     if args.json:
         rows = [asdict(c) | {"stale": c.stale, "reason": c.reason} for c in cells]

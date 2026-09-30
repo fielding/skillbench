@@ -117,7 +117,7 @@ def build_payload(config: Config) -> dict:
     # What each skill's graders and content hash to right now, so a cell whose inputs moved
     # since its run can say so instead of quietly showing an old score.
     current = {s.name: fingerprints(s) for s in skills_found if s.name in with_runs}
-    stale = {(c.model, c.skill): c for c in staleness(records, current, judge=config.judge_model)}
+    stale = {(c.model, c.skill): c for c in staleness(records, current, judge=config.judge_for)}
     cells = []
     for (model, skill), record in sorted(latest(records).items()):
         cell = run_payload(record, config.results_dir)

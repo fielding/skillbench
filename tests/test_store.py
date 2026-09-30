@@ -176,5 +176,13 @@ def test_staleness_flags_any_contributing_run(tmp_path: Path):
     assert ancient.unrecorded and ancient.reason == "no fingerprint recorded"
     judged = cells[("claude-sonnet-5", "judged")]
     assert judged.stale and judged.judge_changed and judged.reason == "judge changed"
+    # A callable resolves the expected judge per model, so a proxied model graded by its
+    # provider's judge is not stale just because the Claude judge differs.
+    per_model = staleness(
+        load_runs(results),
+        current,
+        judge=lambda m: "claude-haiku-4-5" if m == "claude-sonnet-5" else "x",
+    )
+    assert not next(c for c in per_model if c.skill == "judged").judge_changed
     # A skill with results but no longer under the roots is skipped, not reported.
     assert ("claude-sonnet-5", "gone") not in cells

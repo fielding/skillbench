@@ -85,3 +85,22 @@ def test_invalid_toml_is_a_config_error(tmp_path: Path):
     (tmp_path / "skillbench.toml").write_text("[proxy] this is not toml\n")
     with pytest.raises(ConfigError, match="skillbench.toml"):
         load_config(start=tmp_path)
+
+
+def test_judge_for_follows_the_provider(tmp_path: Path):
+    cfg = config_from_dict({"defaults": {"judge_model": "claude-sonnet-5"}}, root=tmp_path)
+    assert cfg.judge_for("claude-opus-5") == "claude-sonnet-5"
+    assert cfg.judge_for("venice/kimi-k3") == "venice/claude-sonnet-4-5"  # built-in provider judge
+    routed = config_from_dict(
+        {
+            "defaults": {"judge_model": "claude-sonnet-5"},
+            "providers": {"other": {"base_url": "https://x/v1", "api_key": "env:K"}},
+            "proxy": {"judge_api_key": "env:ANTHROPIC"},
+        },
+        root=tmp_path,
+    )
+    assert routed.judge_for("other/m") == "claude-sonnet-5"  # Claude judge routed through the proxy
+    unrouted = config_from_dict(
+        {"providers": {"other": {"base_url": "https://x/v1", "api_key": "env:K"}}}, root=tmp_path
+    )
+    assert unrouted.judge_for("other/m") is None

@@ -76,6 +76,18 @@ class Config:
     providers: dict[str, Provider] = field(default_factory=dict)
     proxy: ProxySettings = field(default_factory=ProxySettings)
 
+    def judge_for(self, model: str) -> str | None:
+        """The judge a run of ``model`` uses today: the provider's own judge for a proxied
+        model (unless a Claude judge is routed with ``[proxy] judge_api_key``), else the
+        configured judge. Staleness compares stored runs against this."""
+        prefix = model.split("/", 1)[0] if "/" in model else None
+        provider = self.providers.get(prefix) if prefix else None
+        if provider is None:
+            return self.judge_model
+        if provider.judge_model:
+            return provider.judge_model
+        return self.judge_model if self.proxy.judge_api_key else None
+
     @property
     def results_dir(self) -> Path:
         return self.root / "results"

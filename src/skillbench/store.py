@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -199,16 +199,17 @@ def staleness(
     records: Iterable[RunRecord],
     current: Mapping[str, Fingerprints],
     *,
-    judge: str | None = None,
+    judge: str | Callable[[str], str | None] | None = None,
 ) -> list[Staleness]:
     """Compare every latest cell with the fingerprints its skill would record today.
 
     A cell assembled from several runs (see ``latest``) is stale if any contributing run
     was graded with different inputs, so a single-case re-run on new graders does not
     hide that the rest of the suite still carries the old ones. Skills absent from
-    ``current`` (no longer under the roots) are skipped. With ``judge`` given, a cell whose
-    runs were graded by a different judge model is stale too: scores from two judges are
-    not comparable, so the cell needs a re-run before it sits next to the others.
+    ``current`` (no longer under the roots) are skipped. With ``judge`` given (a model id, or a
+    callable from model id to the judge that model uses now), a cell whose runs were graded
+    by a different judge is stale too: scores from two judges are not comparable, so the cell
+    needs a re-run before it sits next to the others.
     """
     records = list(records)
     by_stamp = {(r.model, r.skill, r.stamp): r for r in records}
@@ -217,12 +218,13 @@ def staleness(
         now = current.get(skill)
         if now is None:
             continue
+        expected_judge = judge(model) if callable(judge) else judge
         skill_changed = evals_changed = unrecorded = judge_changed = False
         for stamp in head.meta.get("merged_from") or [head.stamp]:
             run = by_stamp.get((model, skill, stamp), head)
             meta = run.meta
             recorded_judge = run.result.get("suite", {}).get("judgeModel")
-            if judge and recorded_judge and recorded_judge != judge:
+            if expected_judge and recorded_judge and recorded_judge != expected_judge:
                 judge_changed = True
             recorded_skill = meta.get("skill_fingerprint")
             recorded_evals = meta.get("evals_fingerprint")
